@@ -1,0 +1,5 @@
+{
+  "modelPackage": "com.dogacel.generated.model",
+  "apiPackage": "com.dogacel.generated.api",
+  "invokerPackage": "com.dogacel.generated"
+}

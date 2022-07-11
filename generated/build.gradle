@@ -1,0 +1,79 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version "1.6.21"
+    id "org.jetbrains.kotlin.plugin.allopen" version "1.6.21"
+    id 'io.quarkus'
+
+    id 'org.hidetake.swagger.generator' version '2.19.2'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+configurations {
+    swaggerCodegenV2
+    swaggerCodegenV3
+    swaggerCodegenOpenAPI
+}
+
+dependencies {
+    implementation 'io.quarkus:quarkus-smallrye-reactive-messaging-kafka'
+    implementation 'io.quarkus:quarkus-smallrye-openapi'
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation 'io.quarkus:quarkus-resteasy-reactive-jackson'
+    implementation 'io.quarkus:quarkus-kotlin'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    implementation 'io.quarkus:quarkus-arc'
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+
+    swaggerCodegenV2 'io.swagger:swagger-codegen-cli:2.4.27'             // Swagger Codegen V2
+    swaggerCodegenV3 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.34'  // or Swagger Codegen V3
+    swaggerCodegenOpenAPI 'org.openapitools:openapi-generator-cli:3.3.4'     // or OpenAPI Generator
+
+    implementation "com.squareup.moshi:moshi-kotlin:1.5.0"
+    implementation "com.squareup.moshi:moshi-adapters:1.5.0"
+    implementation "com.squareup.okhttp3:okhttp:3.8.0"
+    implementation "org.threeten:threetenbp:1.3.6"
+}
+
+group 'com.dogacel.pocservices'
+version '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+allOpen {
+    annotation("javax.ws.rs.Path")
+    annotation("javax.enterprise.context.ApplicationScoped")
+    annotation("io.quarkus.test.junit.QuarkusTest")
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
+    kotlinOptions.javaParameters = true
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
+}
+
+swaggerSources {
+    petstore {
+        inputFile = file("$rootDir/../petstore.yaml")
+        code {
+            language = 'kotlin'
+            dependsOn validation
+            configuration = configurations.swaggerCodegenOpenAPI
+            outputDir = file("$rootDir/shared")
+            configFile = file("$rootDir/openapi.config.json")
+        }
+    }
+}
+
+compileKotlin.dependsOn swaggerSources.petstore.code
+sourceSets.main.java.srcDir "${swaggerSources.petstore.code.outputDir}/src/main/kotlin"
+sourceSets.main.resources.srcDir "${swaggerSources.petstore.code.outputDir}/src/main/resources"
